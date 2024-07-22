@@ -1,0 +1,174 @@
+openapi: 3.0.1
+info:
+  title: Messaging API
+  description: API for user registration, login, and messaging.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: myuse
+                password:
+                  type: string
+                  example: 1234
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User registered successfully
+        '400':
+          description: Bad Request
+        '409':
+          description: Username already exists
+        '500':
+          description: Internal Server Error
+
+  /login:
+    post:
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: myuse
+                password:
+                  type: string
+                  example: 1234
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjE4NjU2MzQsInVzZXJuYW1lIjoibXl1c2VyIn0.fxulvV30e-3YaFPWzhOzM65EhFqXONoMb0HDw2XkI_g
+        '400':
+          description: Bad Request
+        '401':
+          description: Invalid username or password
+        '500':
+          description: Internal Server Error
+
+  /send:
+    post:
+      summary: Send a message
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipient:
+                  type: string
+                  example: mariam
+                content:
+                  type: string
+                  example: ana afsffsaw
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Message sent successfully
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+  /messages:
+    get:
+      summary: Get messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: recipient
+          schema:
+            type: string
+          required: true
+          description: The recipient username
+        - in: query
+          name: timestamp
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: The timestamp to start fetching messages from
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          required: false
+          description: Number of messages per page
+      responses:
+        '200':
+          description: A list of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    sender:
+                      type: string
+                    recipient:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                    content:
+                      type: string
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cassandra
+      - redis
+    environment:
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_KEYSPACE=chat
+      - REDIS_HOST=redis
+    links:
+      - cassandra
+      - redis
+
+  cassandra:
+    image: cassandra:latest
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_KEYSPACE: "chat"
+    volumes:
+      - ./init-cassandra.cql:/docker-entrypoint-initdb.d/init-cassandra.cql
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  cassandra-init:
+    image: cassandra:latest
+    depends_on:
+      - cassandra
+    volumes:
+      - ./init-cassandra.cql:/init-cassandra.cql
+    entrypoint: >
+      /bin/bash -c "
+        until cqlsh cassandra -e 'describe keyspaces'; do
+          echo 'Cassandra is unavailable - sleeping'
+          sleep 5
+        done
+        echo 'Cassandra is up - running CQL script'
+        cqlsh cassandra -f /init-cassandra.cql
+      "
